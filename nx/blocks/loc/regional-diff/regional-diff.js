@@ -479,14 +479,28 @@ export const removeLocTags = (html) => {
   });
 };
 
-export async function regionalDiff(original, modified, acceptedHashes, rejectedHashes) {
-  const { org, site } = getPathDetails();
-  const translateConfig = await fetchConfig(org, site);
-  const hostnames = findConfigValue(translateConfig, 'source.fragment.hostnames')?.split?.(',') || [];
-  const equivalentSites = new Set(hostnames.map((hostname) => hostname.split('--')[1]));
+// eslint-disable-next-line max-len -- mirrors upstream compare signature
+export async function regionalDiff(original, modified, acceptedHashes, rejectedHashes, context = {}) {
+  let { org, site } = context;
+  if (!org || !site) {
+    const pathDetails = getPathDetails();
+    org = org ?? pathDetails?.org;
+    site = site ?? pathDetails?.site;
+  }
 
-  const normalizedOriginal = await normalizeLinks(original, site, equivalentSites);
-  const normalizedModified = await normalizeLinks(modified, site, equivalentSites);
+  let equivalentSites = new Set();
+  if (org && site) {
+    const translateConfig = await fetchConfig(org, site);
+    const hostnames = findConfigValue(translateConfig, 'source.fragment.hostnames')?.split?.(',') || [];
+    equivalentSites = new Set(hostnames.map((hostname) => hostname.split('--')[1]));
+  }
+
+  const normalizedOriginal = site
+    ? await normalizeLinks(original, site, equivalentSites)
+    : original;
+  const normalizedModified = site
+    ? await normalizeLinks(modified, site, equivalentSites)
+    : modified;
   const diff = htmldiff(normalizedOriginal, normalizedModified);
   const output = buildHtmlFromDiff(diff, normalizedModified, acceptedHashes, rejectedHashes);
   return output.body.querySelector('main');
