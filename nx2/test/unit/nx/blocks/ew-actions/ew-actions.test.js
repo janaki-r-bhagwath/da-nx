@@ -58,4 +58,14 @@ describe('nx-ew-actions preflight gate (Gate #1)', () => {
     el._onPreflightStatus({ detail: { path: '/other/doc', status: 'success' } });
     expect(el._preflightPassed).to.equal(false);
   });
+
+  it('_prepareDetails is a stable reference until the hash state changes', () => {
+    // Stability matters: an unstable object churns <prepare-menu>.details and closes an
+    // open Preflight dialog mid-run.
+    const el = make({ org: 'org', site: 'site', path: '/page' });
+    const first = el._prepareDetails;
+    expect(el._prepareDetails).to.equal(first);
+    el._hashState = { org: 'org', site: 'site', path: '/other' };
+    expect(el._prepareDetails).to.not.equal(first);
+  });
 });

@@ -76,7 +76,14 @@ class NXEwActions extends LitElement {
   }
 
   get _prepareDetails() {
-    return buildPrepareDetails(this._hashState);
+    // Memoize by hash-state identity: the built object must be stable across re-renders,
+    // otherwise <prepare-menu> sees a new `.details` every render, calls reset(), and closes
+    // an open Preflight dialog mid-run.
+    if (this._pdHashState !== this._hashState) {
+      this._pdHashState = this._hashState;
+      this._pdValue = buildPrepareDetails(this._hashState);
+    }
+    return this._pdValue;
   }
 
   connectedCallback() {
@@ -320,7 +327,7 @@ class NXEwActions extends LitElement {
 
     const publishItem = { id: 'publish', label: 'Publish' };
     if (this._enforcePreflight) {
-      publishItem.swatch = this._preflightPassed ? 'var(--s2-green-700)' : 'var(--s2-orange-500)';
+      publishItem.statusDot = this._preflightPassed ? 'var(--s2-green-700)' : 'var(--s2-orange-500)';
     }
     const menuItems = [{ id: 'preview', label: 'Preview' }, publishItem];
 
