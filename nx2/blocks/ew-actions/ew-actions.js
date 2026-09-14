@@ -76,9 +76,7 @@ class NXEwActions extends LitElement {
   }
 
   get _prepareDetails() {
-    // Memoize by hash-state identity: the built object must be stable across re-renders,
-    // otherwise <prepare-menu> sees a new `.details` every render, calls reset(), and closes
-    // an open Preflight dialog mid-run.
+    // Stable ref per hash-state: an unstable object makes <prepare-menu> reset() mid-run.
     if (this._pdHashState !== this._hashState) {
       this._pdHashState = this._hashState;
       this._pdValue = buildPrepareDetails(this._hashState);
@@ -93,7 +91,6 @@ class NXEwActions extends LitElement {
     this._unsubHash = hashChange.subscribe((state) => {
       const prevPath = this._prepareDetails?.fullpath;
       this._hashState = state;
-      // A new document resets the Preflight verdict and re-reads the flag.
       if (this._prepareDetails?.fullpath !== prevPath) {
         this._preflightPassed = false;
         this._checkEnforcePreflight();
@@ -126,9 +123,6 @@ class NXEwActions extends LitElement {
     }
   }
 
-  // Ask Preflight to run for the open document; resolve with its verdict. Dispatches the shared
-  // `nx-preflight-run` and waits for the matching `nx-preflight-status`. Resolves
-  // 'success' | 'fail', or undefined on timeout (no Preflight surface answered).
   requestPreflight(fullpath) {
     const requestId = newPreflightRequestId();
     return new Promise((resolve) => {

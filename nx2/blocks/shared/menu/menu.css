@@ -78,7 +78,6 @@ nx-popover {
   border-radius: var(--s2-corner-radius-75);
 }
 
-/* Small trailing status indicator (e.g. Preflight required/passed), pinned to the right. */
 .menu-item-status-dot {
   flex-shrink: 0;
   width: 8px;

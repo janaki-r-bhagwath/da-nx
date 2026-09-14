@@ -60,8 +60,6 @@ describe('nx-ew-actions preflight gate (Gate #1)', () => {
   });
 
   it('_prepareDetails is a stable reference until the hash state changes', () => {
-    // Stability matters: an unstable object churns <prepare-menu>.details and closes an
-    // open Preflight dialog mid-run.
     const el = make({ org: 'org', site: 'site', path: '/page' });
     const first = el._prepareDetails;
     expect(el._prepareDetails).to.equal(first);

@@ -53,7 +53,6 @@ describe('nx-menu description', () => {
     const dot = el.shadowRoot.querySelector('.menu-item-status-dot');
     expect(dot).to.not.be.null;
     expect(dot.style.background).to.equal('rgb(0, 128, 0)');
-    // Rendered after the label text (trailing / right), not before it.
     const text = el.shadowRoot.querySelector('.menu-item-text');
     // eslint-disable-next-line no-bitwise
     const isAfter = text.compareDocumentPosition(dot) & Node.DOCUMENT_POSITION_FOLLOWING;
