@@ -20,6 +20,8 @@ const MENU_ICON_HREF = `${codeBase}/img/icons/s2-icon-more-20-n.svg#icon`;
 
 const prepareModuleUrl = () => `${window.location.origin}/blocks/canvas/editor-utils/prepare-menu.js`;
 
+const cacheBustModuleUrl = () => `${window.location.origin}/blocks/shared/sidekick.js`;
+
 /** @param {string} segment */
 const withHtmlExt = (segment) => {
   if (!segment || segment.endsWith('/') || /\.(html|json)$/.test(segment)) return segment;
@@ -79,6 +81,18 @@ class NXEwActions extends LitElement {
     this.shadowRoot.adoptedStyleSheets = [style, buttonStyle];
     this._unsubHash = hashChange.subscribe((state) => { this._hashState = state; });
     this._loadPrepare();
+    // Warm the cache-bust import so it's ready by the time preview/publish fires.
+    this._ensureCacheBust();
+  }
+
+  // Memoize the da-live cache-bust import so the preload above and the
+  // preview/publish call site share one dynamic import. Resolves to the
+  // `sidekickCacheBust` function, or null if da-live can't be reached.
+  _ensureCacheBust() {
+    this._cacheBust ??= import(cacheBustModuleUrl())
+      .then((m) => m.sidekickCacheBust)
+      .catch(() => null);
+    return this._cacheBust;
   }
 
   async _loadPrepare() {
@@ -176,6 +190,8 @@ class NXEwActions extends LitElement {
 
     this._hasError = false;
     const url = this._resolveOpenUrl(action, aemPath, result.url);
+    const bustCache = await this._ensureCacheBust();
+    await bustCache?.(url);
     window.open(url, url);
     this._saveVersion(action);
     this._busy = false;
