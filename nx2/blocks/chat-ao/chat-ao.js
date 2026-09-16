@@ -424,6 +424,7 @@ export default class NxChatAo extends LitElement {
       <div class="chat-form-wrap">
         <nx-menu
           class="slash-menu"
+          size="m"
           .ignoreFocus=${true}
           .scoped=${true}
           @select=${({ detail }) => this._onSlashSelect(detail.id)}
