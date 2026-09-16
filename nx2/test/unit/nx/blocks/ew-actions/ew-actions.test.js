@@ -43,6 +43,14 @@ describe('nx-ew-actions preflight gate (Gate #1)', () => {
     expect(await pending).to.equal('fail');
   });
 
+  it('disconnectedCallback cancels a pending requestPreflight, resolving undefined', async () => {
+    const el = make();
+    document.body.append(el);
+    const pending = el.requestPreflight('/org/site/page.html');
+    el.remove();
+    expect(await pending).to.equal(undefined);
+  });
+
   it('_onPreflightStatus tracks the verdict for the current document', () => {
     const el = make({ org: 'org', site: 'site', path: '/page' });
     const { fullpath } = el._prepareDetails;

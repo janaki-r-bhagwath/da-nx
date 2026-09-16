@@ -118,8 +118,12 @@ class NXEwActions extends LitElement {
       const rows = configs.filter(Boolean).flatMap((c) => getFirstSheet(c) || []);
       this._enforcePreflight = rows.some((r) => r.key === 'editor.enforcePreflight'
         && `${r.value}`.toLowerCase() === 'true');
-    } catch {
+    } catch (e) {
+      // Opt-in gate: without config we can't know a site enabled it, so leave
+      // publish ungated rather than block every site on a transient config error.
       this._enforcePreflight = false;
+      // eslint-disable-next-line no-console
+      console.warn('Preflight enforcement config unavailable; leaving publish ungated.', e);
     }
   }
 
@@ -131,8 +135,10 @@ class NXEwActions extends LitElement {
       const finish = (status) => {
         document.removeEventListener(PREFLIGHT_EVENT.STATUS, onStatus);
         clearTimeout(timer);
+        this._cancelPreflight = null;
         resolve(status);
       };
+      this._cancelPreflight = finish;
       onStatus = (e) => {
         const { path, status, requestId: rid } = e.detail || {};
         if (rid === requestId && path === fullpath) finish(status);
@@ -159,6 +165,7 @@ class NXEwActions extends LitElement {
     super.disconnectedCallback();
     this._unsubHash?.();
     document.removeEventListener(PREFLIGHT_EVENT.STATUS, this._onPreflightStatus);
+    this._cancelPreflight?.(undefined);
   }
 
   _togglePrepareMenu(e) {
@@ -195,6 +202,16 @@ class NXEwActions extends LitElement {
     this._runAemAction(action);
   }
 
+  async _showActionError(action, message) {
+    await Promise.all([
+      import('../shared/dialog/dialog.js'),
+      import(`${NX_BASE}/public/sl/components.js`),
+    ]);
+    this._busy = false;
+    this._hasError = true;
+    this._dialog = { phase: 'error', error: { action, type: 'error', message } };
+  }
+
   async _runAemAction(action) {
     const aemPath = buildAemPathFromHashState(this._hashState);
     if (!aemPath || this._busy) return;
@@ -208,20 +225,7 @@ class NXEwActions extends LitElement {
     if (editorDoc?.forceSave) {
       const flushResult = await editorDoc.forceSave();
       if (!flushResult?.ok) {
-        await Promise.all([
-          import('../shared/dialog/dialog.js'),
-          import(`${NX_BASE}/public/sl/components.js`),
-        ]);
-        this._busy = false;
-        this._hasError = true;
-        this._dialog = {
-          phase: 'error',
-          error: {
-            action,
-            type: 'error',
-            message: flushResult?.error || 'Unable to confirm save. Please retry or reload the editor.',
-          },
-        };
+        await this._showActionError(action, flushResult?.error || 'Unable to confirm save. Please retry or reload the editor.');
         return;
       }
     }
@@ -229,7 +233,9 @@ class NXEwActions extends LitElement {
     if (action === 'publish' && this._enforcePreflight) {
       const status = await this.requestPreflight(this._prepareDetails?.fullpath);
       if (status !== 'success') {
-        this._busy = false;
+        await this._showActionError(action, status === undefined
+          ? 'Preflight did not finish in time. Please run Preflight again before publishing.'
+          : 'Preflight found issues. Resolve them in the Preflight panel, then publish again.');
         return;
       }
     }
