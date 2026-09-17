@@ -76,6 +76,50 @@ function ensureExtension(path) {
 
 // --- Project Operations ---
 
+// Trados's max page size (the `top` param) is 100 - see
+// https://developers.rws.com/languagecloud-api-docs/ ListProjectTasks.
+const LIST_PAGE_LIMIT = 100;
+
+/**
+ * Fetches every item from a paginated Trados list endpoint via its
+ * `skip`/`top` params, aggregating across pages instead of returning only
+ * the first page - Trados caps list endpoints at `LIST_PAGE_LIMIT` items
+ * per page by default, which would otherwise silently undercount a
+ * project with more items than one page (e.g. many files x languages x
+ * workflow steps of tasks, or many files x languages of target-files).
+ * @param {Object} service - The service configuration.
+ * @param {string} url - The endpoint url, including any query params
+ *  (e.g. `fields`) but not `skip`/`top`.
+ * @returns {Promise<Object[]|null>} All items, or null if any page fails.
+ */
+async function fetchAllPages(service, url) {
+  const items = [];
+  let skip = 0;
+  let itemCount = Infinity;
+  const separator = url.includes('?') ? '&' : '?';
+
+  while (skip < itemCount) {
+    // eslint-disable-next-line no-await-in-loop
+    const opts = await getOpts(service);
+    const pageUrl = `${url}${separator}skip=${skip}&top=${LIST_PAGE_LIMIT}`;
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await corsFetch(pageUrl, opts);
+    if (!resp.ok) return null;
+
+    // eslint-disable-next-line no-await-in-loop
+    const json = await resp.json();
+    const pageItems = json.items || [];
+    items.push(...pageItems);
+    itemCount = json.itemCount ?? items.length;
+
+    // Guard against an infinite loop if itemCount is ever wrong.
+    if (!pageItems.length) break;
+    skip += pageItems.length;
+  }
+
+  return items;
+}
+
 /**
  * Fetches custom field definitions from Trados and builds a lookup map.
  * @param {Object} service - The service configuration
@@ -84,19 +128,13 @@ function ensureExtension(path) {
  */
 async function getCustomFieldDefinitions(service) {
   const { apiEndpoint } = service;
-  const opts = await getOpts(service, 'GET');
-  const resp = await corsFetch(
+  const definitions = await fetchAllPages(
+    service,
     `${apiEndpoint}/custom-field-definitions?fields=id,name,key,type,description,defaultValue,isMandatory`,
-    opts,
   );
 
-  if (!resp.ok) return new Map();
-
-  const json = await resp.json();
-  const definitions = json.items || [];
-
   // Build a lookup map: name -> definition
-  return new Map(definitions.map((def) => [def.name, def]));
+  return new Map((definitions || []).map((def) => [def.name, def]));
 }
 
 async function createProject(options, service, title, langs, sendMessage) {
@@ -291,6 +329,18 @@ export function getSourceFileStatus(tasks) {
   return null;
 }
 
+/**
+ * Determines a language's translation status from its Trados tasks.
+ * `file-delivery` is the terminal step of Trados's workflow - other task
+ * types (e.g. translation-memory matching, machine translation) mark
+ * progression through the workflow, not completion of the language itself.
+ * @param {Object[]} tasks - All tasks for the project.
+ * @param {string} langCode - The target language code to check.
+ * @param {number} fileCount - The number of files expected for this lang.
+ * @returns {{status: string, translated: number}} The language's status
+ *  (`'error'`, `'translated'`, or `'in progress'`) and the number of files
+ *  delivered so far.
+ */
 export function getLangStatus(tasks, langCode, fileCount) {
   const langTasks = tasks.filter((task) => (
     task.input?.targetFile?.languageDirection?.targetLanguage?.languageCode === langCode
@@ -307,9 +357,40 @@ export function getLangStatus(tasks, langCode, fileCount) {
   return { status: 'in progress', translated };
 }
 
+/**
+ * Fetches every task for a project, paging through Trados's tasks list
+ * rather than taking the first page as the complete set - a project with
+ * more tasks than one page (e.g. many files x languages x workflow steps)
+ * would otherwise silently undercount completed work.
+ * @param {Object} service - The service configuration.
+ * @param {string} projectId - The Trados project id.
+ * @returns {Promise<Object[]|null>} All tasks, or null if any page fails.
+ */
+function fetchAllTasks(service, projectId) {
+  const { apiEndpoint } = service;
+  return fetchAllPages(
+    service,
+    `${apiEndpoint}/projects/${projectId}/tasks?fields=taskType,status,input.targetFile`,
+  );
+}
+
+/**
+ * Refreshes translation status for every target language of a project by
+ * polling Trados's task list.
+ * @param {Object} params
+ * @param {Object} params.service - The service configuration.
+ * @param {Object[]} params.langs - Target languages; mutated in place with
+ *  `translation.status`/`translation.translated`. A lang already at
+ *  `'complete'` (saved to DA) or `'cancelled'` is left untouched - both
+ *  are terminal, and Trados keeps reporting completed file-delivery
+ *  tasks indefinitely, which would otherwise look "newly finished" (or
+ *  un-cancel a cancelled lang) on every subsequent check.
+ * @param {Object[]} params.urls - The urls in the project.
+ * @param {Object} params.actions - `{ sendMessage, saveState }` callbacks.
+ * @returns {Promise<void>}
+ */
 export async function getStatusAll({ service, langs, urls, actions }) {
   const { sendMessage, saveState } = actions;
-  const { apiEndpoint } = service;
 
   const projectId = langs[0]?.translation?.projectId;
   if (!projectId) return;
@@ -317,20 +398,21 @@ export async function getStatusAll({ service, langs, urls, actions }) {
   const localesStr = langs.map((lang) => lang.code).join(', ');
   sendMessage({ text: `Getting status for ${localesStr}` });
 
-  const opts = await getOpts(service);
-  const resp = await corsFetch(
-    `${apiEndpoint}/projects/${projectId}/tasks?fields=taskType,status,input.targetFile`,
-    opts,
-  );
-  if (!resp.ok) return;
-
-  const json = await resp.json();
-  const tasks = json.items || [];
+  const tasks = await fetchAllTasks(service, projectId);
+  if (!tasks) return;
 
   const sourceError = getSourceFileStatus(tasks);
 
   langs.forEach((lang) => {
     lang.translation ??= {};
+
+    // 'complete'/'cancelled' are terminal - Trados keeps reporting
+    // completed file-delivery tasks indefinitely, so without this guard
+    // every subsequent status check would revert 'complete' back to
+    // 'translated' (triggering a re-save) or 'cancelled' back to
+    // 'translated' (undoing a cancel).
+    if (['complete', 'cancelled'].includes(lang.translation.status)) return;
+
     if (sourceError) {
       lang.translation.status = sourceError;
     } else {
@@ -357,15 +439,11 @@ export async function saveItems({
   if (!projectId) return urls;
 
   // Get target files for this project
-  const opts = await getOpts(service);
-  const resp = await corsFetch(
+  const targetFiles = await fetchAllPages(
+    service,
     `${apiEndpoint}/projects/${projectId}/target-files?fields=latestVersion,languageDirection.targetLanguage,sourceFile`,
-    opts,
   );
-  if (!resp.ok) return urls;
-
-  const json = await resp.json();
-  const targetFiles = json.items || [];
+  if (!targetFiles) return urls;
 
   // Build lookup: source file ID → target file (filtered by language)
   const sourceIdToTarget = new Map();
