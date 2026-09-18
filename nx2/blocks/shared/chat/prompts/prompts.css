@@ -115,10 +115,15 @@
   font-size: var(--s2-component-m-medium-font-size);
 
   .prompt-item-title {
+    min-width: 0;
+    overflow: hidden;
     color: var(--s2-gray-700);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .prompt-item-category {
+    flex-shrink: 0;
     color: var(--s2-gray-500);
   }
 }
