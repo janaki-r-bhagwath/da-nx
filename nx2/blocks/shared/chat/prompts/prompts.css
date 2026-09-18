@@ -78,7 +78,7 @@
 
   li {
     border-top: 1px solid var(--s2-gray-100);
-    padding: var(--s2-spacing-75) 0;
+    padding: var(--s2-spacing-100) 0;
     margin: 0 var(--s2-spacing-100);
 
     &:first-child {
@@ -95,8 +95,8 @@
   border: none;
   border-radius: var(--s2-corner-radius-400);
   background: none;
-  padding: var(--s2-spacing-75) var(--s2-spacing-100);
-  gap: var(--s2-spacing-75);
+  padding: var(--s2-spacing-100) var(--s2-spacing-200);
+  gap: var(--s2-spacing-100);
   color: var(--s2-gray-800);
 
   &:hover,
