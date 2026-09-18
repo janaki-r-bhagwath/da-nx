@@ -111,19 +111,21 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s2-spacing-200);
-  line-height: var(--s2-component-m-medium-line-height);
-  font-size: var(--s2-component-m-medium-font-size);
 
   .prompt-item-title {
     min-width: 0;
     overflow: hidden;
     color: var(--s2-gray-700);
+    font-size: var(--s2-component-s-regular-font-size);
+    line-height: var(--s2-component-s-regular-line-height);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   .prompt-item-category {
     flex-shrink: 0;
+    font-size: var(--s2-component-s-regular-font-size);
+    line-height: var(--s2-component-s-regular-line-height);
     color: var(--s2-gray-500);
   }
 }
