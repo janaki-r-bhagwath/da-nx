@@ -369,6 +369,7 @@ export default class NxChatAo extends LitElement {
         ${this.episodes?.length ? html`
           <nx-picker
             class="session-picker"
+            size="m"
             .items=${this.episodes.map((ep) => ({ value: ep.id, label: this._episodeLabel(ep) }))}
             .value=${this.episodeId}
             .labelOverride=${this._sessionFallbackLabel()}

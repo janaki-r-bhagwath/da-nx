@@ -47,12 +47,14 @@
 
   .session-picker {
     --nx-picker-max-width: 50%;
-    --nx-picker-height: 24px;
+    --nx-picker-height: 32px;
   }
 
   & > div {
     display: inline-flex;
+    flex-shrink: 0;
     margin-inline-start: auto;
+    white-space: nowrap;
   }
 }
 
