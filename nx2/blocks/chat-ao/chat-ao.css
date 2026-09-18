@@ -29,6 +29,7 @@
 
 .prompts-popover {
   max-width: 720px;
+  height: 600px;
   box-sizing: border-box;
   top: auto;
   padding: 0;
