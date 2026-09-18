@@ -359,7 +359,7 @@ export default class NxChatAo extends LitElement {
       .filter((p) => !p.area || p.area === 'all' || p.area === view);
 
     return html`
-      <nx-popover class="prompts-popover" .scoped=${true}>
+      <nx-popover class="prompts-popover">
         <nx-prompts
           .prompts=${prompts}
           .onSend=${(p) => this._sendPrompt(p)}
