@@ -379,7 +379,7 @@ export default class NxChatAo extends LitElement {
         <div>
           <button type="button" class="nx-action-btn-quiet" @click=${this._handleNewSession}>
             ${icon('add')}
-            <span>New session</span>
+            <span>New chat</span>
           </button>
           <button
             class="nx-action-btn-icon"
