@@ -117,7 +117,7 @@
   .prompt-item-title {
     min-width: 0;
     overflow: hidden;
-    color: var(--s2-gray-700);
+    color: var(--s2-gray-500);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
