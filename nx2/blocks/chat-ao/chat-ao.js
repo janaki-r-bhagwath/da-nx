@@ -65,6 +65,9 @@ export default class NxChatAo extends LitElement {
     pendingPermission: { type: Object },
     loadingEpisode: { type: Boolean },
     staleEpisode: { type: Object },
+    // Opt-in: chat-ao is also embedded outside the Coworker surface (e.g. cma),
+    // so the New chat button only renders when a host explicitly asks for it.
+    showNewChat: { type: Boolean, attribute: 'show-new-chat' },
     _dragging: { state: true },
     _prompts: { state: true },
     _planFeedback: { state: true },
@@ -72,6 +75,10 @@ export default class NxChatAo extends LitElement {
   };
 
   _slashMenu = createSlashMenu(this, { getItems: (filter) => this._getSlashItems(filter) });
+
+  // Defaults on for the existing Coworker surface; hosts that embed chat-ao
+  // for other purposes (e.g. cma) can opt out with `show-new-chat="false"`.
+  showNewChat = true;
 
   // Tracks the last interim chunk inserted into .chat-input so the next
   // chunk can replace it in place — see utils/voice-input.js#appendTranscript.
@@ -396,10 +403,11 @@ export default class NxChatAo extends LitElement {
             @change=${this._handleEpisodeChange}
           ></nx-picker>` : nothing}
         <div>
-          <button type="button" class="nx-btn-ai nx-btn-sm" @click=${this._handleNewSession}>
-            ${icon('newChat')}
-            <span>New chat</span>
-          </button>
+          ${this.showNewChat ? html`
+            <button type="button" class="nx-action-btn-quiet nx-new-chat nx-btn-sm" @click=${this._handleNewSession}>
+              ${icon('newChat')}
+              <span>New chat</span>
+            </button>` : nothing}
           <button
             class="nx-action-btn-icon"
             aria-label="Close chat panel"

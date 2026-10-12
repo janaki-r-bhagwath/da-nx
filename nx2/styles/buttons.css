@@ -2,7 +2,7 @@ button {
   font-family: var(--s2-font-family);
 }
 
-.nx-action-btn, .nx-action-btn-icon, .nx-action-btn-quiet, .nx-btn-accent, .nx-btn-primary, .nx-btn-ai  {
+.nx-action-btn, .nx-action-btn-icon, .nx-action-btn-quiet, .nx-btn-accent, .nx-btn-primary  {
   display: flex;
   transition: transform 0.125s ease-out, background-color 0.125s ease-out, color 0.125s ease-out;
   padding: 7px var(--s2-spacing-200);
@@ -64,18 +64,12 @@ button {
   }
 }
 
-.nx-btn-accent, .nx-btn-primary, .nx-btn-ai {
-  border-radius: var(--s2-corner-radius-800);
-
-  &.nx-btn-sm {
-    border-radius: 12px;
-  }
-}
-
 .nx-btn-accent, .nx-btn-primary {
+  border-radius: var(--s2-corner-radius-800);
   font-weight: var(--s2-component-m-bold-font-weight);
 
   &.nx-btn-sm {
+    border-radius: 12px;
     font-weight: var(--s2-component-s-bold-font-weight);
   }
 }
@@ -115,29 +109,6 @@ button {
 
 .nx-btn-sm kbd {
   font-size: var(--s2-component-xs-medium-font-size);
-}
-
-.nx-btn-ai.nx-btn-ai {
-  background: transparent;
-  color: var(--s2-gray-800);
-  border: 1px solid var(--s2-gray-300);
-  border-radius: 16px;
-
-  &.nx-btn-sm {
-    height: 28px;
-  }
-
-  &:hover:not(:disabled) {
-    background: var(--s2-gray-75);
-    color: var(--s2-gray-800);
-    border-color: var(--s2-gray-400);
-  }
-
-  /* Repeated class bumps specificity above the shared 18px default and the .nx-btn-sm 16px rule. */
-  &.nx-btn-ai svg {
-    width: 16px;
-    height: 16px;
-  }
 }
 
 .nx-action-btn-quiet, .nx-action-btn-icon  {
