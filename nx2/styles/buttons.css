@@ -115,8 +115,9 @@ button {
    low-emphasis action, visible stroke, no background. Hand-ported since this repo has no
    Spectrum component library, only design tokens (nx2/deps/spectrum). Colors below are
    token-for-token matches to @react-spectrum/s2's compiled Button.css (gray-800 border/text,
-   gray-100 hover fill) confirmed via `npm pack @react-spectrum/s2`. */
-.nx-btn-ai {
+   gray-100 hover fill) confirmed via `npm pack @react-spectrum/s2`.
+   Doubled class (not just `.nx-btn-ai`) to out-specificity chat-ao.css's `:host button { border: none }`. */
+.nx-btn-ai.nx-btn-ai {
   background: transparent;
   color: var(--s2-gray-800);
   border: 2px solid var(--s2-gray-800);
