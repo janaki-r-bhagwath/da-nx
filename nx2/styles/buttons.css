@@ -114,17 +114,19 @@ button {
 /* Spectrum secondary button, outline fill style (https://spectrum.adobe.com/web/rsp/components/button):
    low-emphasis action, visible stroke, no background. Hand-ported since this repo has no
    Spectrum component library, only design tokens (nx2/deps/spectrum). Colors below are
-   token-for-token matches to @react-spectrum/s2's compiled Button.css (gray-800 border/text,
-   gray-100 hover fill) confirmed via `npm pack @react-spectrum/s2`.
+   token-for-token matches to @react-spectrum/s2's Button.mjs variant logic (border is
+   gray-300 for `variant="secondary"`, darker gray-800 is `variant="primary"`; text color
+   isn't variant-specific for the outline fill style), confirmed via `npm pack @react-spectrum/s2`.
    Doubled class (not just `.nx-btn-ai`) to out-specificity chat-ao.css's `:host button { border: none }`. */
 .nx-btn-ai.nx-btn-ai {
   background: transparent;
   color: var(--s2-gray-800);
-  border: 2px solid var(--s2-gray-800);
+  border: 2px solid var(--s2-gray-300);
 
   &:hover:not(:disabled) {
     background: var(--s2-gray-100);
-    color: var(--s2-gray-800);
+    color: var(--s2-gray-900);
+    border-color: var(--s2-gray-400);
   }
 
   /* Repeated class bumps specificity above the shared 18px default and the .nx-btn-sm 16px rule. */
