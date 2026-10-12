@@ -121,7 +121,7 @@ button {
   background: transparent;
   color: var(--s2-gray-800);
   border: 1px solid var(--s2-gray-300);
-  border-radius: 12px;
+  border-radius: 16px;
 
   &.nx-btn-sm {
     height: 28px;
