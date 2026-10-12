@@ -498,19 +498,12 @@
   font-size: var(--s2-component-m-regular-font-size);
 }
 
-/* Modifier on top of the shared quiet-button base: adds the outline and the
-   taller 28px row this button needs, kept chat-specific since no other
-   consumer of the shared button classes wants a bordered pill. */
 .nx-new-chat.nx-new-chat {
-  border: 1px solid var(--s2-gray-300);
-  border-radius: 16px;
-
-  &.nx-btn-sm {
-    height: 28px;
-  }
+  border: 2px solid var(--s2-gray-300);
+  border-radius: var(--s2-corner-radius-800);
 
   &:hover:not(:disabled) {
-    background: var(--s2-gray-75);
+    background: var(--s2-gray-100);
     border-color: var(--s2-gray-400);
   }
 }
