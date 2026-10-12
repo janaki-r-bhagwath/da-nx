@@ -117,16 +117,20 @@ button {
   font-size: var(--s2-component-xs-medium-font-size);
 }
 
-/* Quiet button, no border: transparent by default, highlighted only on hover
-   (same gray-75/gray-800 highlight pair other icon-only action buttons use). */
 .nx-btn-ai.nx-btn-ai {
   background: transparent;
   color: var(--s2-gray-800);
-  border: none;
+  border: 1px solid var(--s2-gray-300);
+  border-radius: 12px;
+
+  &.nx-btn-sm {
+    height: 28px;
+  }
 
   &:hover:not(:disabled) {
     background: var(--s2-gray-75);
     color: var(--s2-gray-800);
+    border-color: var(--s2-gray-400);
   }
 
   /* Repeated class bumps specificity above the shared 18px default and the .nx-btn-sm 16px rule. */
