@@ -52,6 +52,7 @@
 
   & > div {
     display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
     margin-inline-start: auto;
     white-space: nowrap;
